@@ -1,0 +1,57 @@
+volumes:
+  postgres_data:
+  nats_data:
+  redis_data:
+
+services:
+  postgres:
+    image: postgres:alpine
+    environment:
+      POSTGRES_PASSWORD: password
+      POSTGRES_USER: postgres
+      POSTGRES_DB: postgres
+      PGDATA: /var/lib/postgresql/data/pgdata
+    ports:
+      - 5432:5432
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: [ 'CMD', 'pg_isready -U supertokens_user' ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:alpine
+    ports:
+      - 6379:6379
+    volumes:
+      - redis_data:/data
+
+  nats:
+    image: nats:alpine
+    command:
+      - '--jetstream'
+      - '--store_dir'
+      - '/data'
+    ports:
+      - 4222:4222
+      - 8222:8222
+      - 6222:6222
+    volumes:
+      - nats_data:/data
+
+  supertokens:
+    image: registry.supertokens.io/supertokens/supertokens-postgresql:4.3
+    depends_on:
+      - postgres
+    ports:
+      - 3567:3567
+    environment:
+      POSTGRESQL_CONNECTION_URI: "postgresql://postgres:password@postgres:5432/postgres"
+    healthcheck:
+      test: >
+        bash -c 'exec 3<>/dev/tcp/127.0.0.1/3567 && echo -e "GET /hello HTTP/1.1\r\nhost: 127.0.0.1:3567\r\nConnection: close\r\n\r\n" >&3 && cat <&3 | grep "Hello"'
+      interval: 10s
+      timeout: 5s
+      retries: 5

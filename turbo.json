@@ -11,5 +11,12 @@
     "dev": {
       "cache": false
     }
-  }
+  },
+  "globalDependencies": [
+    ".env"
+  ],
+  "globalEnv": [
+    "SUPERTOKENS_API_KEY",
+    "LABNOC_API_RATE_LIMIT_GLOBAL"
+  ]
 }
